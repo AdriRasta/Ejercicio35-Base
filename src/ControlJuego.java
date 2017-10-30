@@ -35,7 +35,7 @@ public class ControlJuego {
 	 * 			El resto de posiciones que no son minas guardan en el entero cuántas minas hay alrededor de la celda
 	 */
 	public void inicializarPartida(){
-
+		//Esto es una prueba para ver que se actualiza el repositorio
 		
 	}
 	
