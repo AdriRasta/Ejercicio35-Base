@@ -1,10 +1,19 @@
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.awt.Image;
+
+import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -15,9 +24,8 @@ import javax.swing.SwingConstants;
 
 public class VentanaPrincipal {
 
-	 
 	VentanaPrincipal ventanaInterna = this;
-	
+
 	// La ventana principal, en este caso, guarda todos los componentes:
 	JFrame ventana;
 	JPanel panelImagen;
@@ -30,12 +38,18 @@ public class VentanaPrincipal {
 	JPanel[][] panelesJuego;
 	JButton[][] botonesJuego;
 
+	// Label que contendr· la imagen del juego
+	JLabel labelImagen;
+
 	// Correspondencia de colores para las minas:
 	Color correspondenciaColores[] = { Color.BLACK, Color.CYAN, Color.GREEN, Color.ORANGE, Color.RED, Color.RED,
 			Color.RED, Color.RED, Color.RED, Color.RED };
 
 	JButton botonEmpezar;
 	JTextField pantallaPuntuacion;
+
+	// Stream de lectura de la imagen
+	BufferedImage bufferedImage;
 
 	// LA VENTANA GUARDA UN CONTROL DE JUEGO:
 	ControlJuego juego;
@@ -75,6 +89,11 @@ public class VentanaPrincipal {
 		panelJuego.setBorder(BorderFactory.createTitledBorder("Juego"));
 
 		// Colocamos los componentes:
+		// colocar el la imagen en el panel
+		panelImagen.setLayout(new GridLayout(1, 1));
+		labelImagen = new JLabel();
+		panelImagen.add(labelImagen);
+
 		// AZUL
 		GridBagConstraints settings = new GridBagConstraints();
 		settings.gridx = 0;
@@ -83,6 +102,7 @@ public class VentanaPrincipal {
 		settings.weighty = 1;
 		settings.fill = GridBagConstraints.BOTH;
 		ventana.add(panelImagen, settings);
+
 		// VERDE
 		settings = new GridBagConstraints();
 		settings.gridx = 1;
@@ -91,6 +111,7 @@ public class VentanaPrincipal {
 		settings.weighty = 1;
 		settings.fill = GridBagConstraints.BOTH;
 		ventana.add(panelEmpezar, settings);
+
 		// AMARILLO
 		settings = new GridBagConstraints();
 		settings.gridx = 2;
@@ -99,6 +120,7 @@ public class VentanaPrincipal {
 		settings.weighty = 1;
 		settings.fill = GridBagConstraints.BOTH;
 		ventana.add(panelPuntuacion, settings);
+
 		// ROJO
 		settings = new GridBagConstraints();
 		settings.gridx = 0;
@@ -135,12 +157,12 @@ public class VentanaPrincipal {
 	}
 
 	/**
-	 * M√©todo que inicializa todos los l√≠steners que necesita inicialmente el
+	 * M√©todo que inicializa todos los listeners que necesita inicialmente el
 	 * programa
 	 */
 	public void inicializarListeners() {
 
-		//Inicializar la escucha de los botones
+		// Inicializar la escucha de los botones
 		for (int i = 0; i < botonesJuego.length; i++) {
 			for (int j = 0; j < botonesJuego[i].length; j++) {
 				botonesJuego[i][j].addActionListener(new ActionBoton(this, i, j));
@@ -148,47 +170,56 @@ public class VentanaPrincipal {
 			}
 		}
 
-		
-		//Comenzar de nuevo la partida
+		// Comenzar de nuevo la partida
 		botonEmpezar.addActionListener(new ActionListener() {
-			
-			
-			
+
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				//Borrar Los botones
+
+				// Inicializar de nuevo el control del juego, a su vez se inicializa de nuevo la
+				// partida en el constructor de ControlJuego
+				juego = new ControlJuego();
+
+				// Establecer la puntuaciÛn de nuevo a cero
+				actualizarPuntuacion();
+
+				// Borrar Los botones
 				for (int i = 0; i < botonesJuego.length; i++) {
-					for (int j = 0; j < botonesJuego[i].length; j++) {						
-								panelesJuego[i][j].removeAll();							
+					for (int j = 0; j < botonesJuego[i].length; j++) {
+						panelesJuego[i][j].removeAll();
 					}
 				}
-				
-				//Inicializar de nuevo los botones
+
+				// Inicializar de nuevo los botones
 				for (int i = 0; i < botonesJuego.length; i++) {
 					for (int j = 0; j < botonesJuego[i].length; j++) {
 						botonesJuego[i][j] = new JButton("-");
 						panelesJuego[i][j].add(botonesJuego[i][j]);
 					}
 				}
-				
-				//Inicializar de nuevo los listeners de losbotones
+
+				// Inicializar de nuevo los listeners de los botones
 				for (int i = 0; i < botonesJuego.length; i++) {
 					for (int j = 0; j < botonesJuego[i].length; j++) {
 						botonesJuego[i][j].addActionListener(new ActionBoton(ventanaInterna, i, j));
 						refrescarPantalla();
 					}
 				}
-				
-				//Inicializar de nuevo el control del juego				
-				juego = new ControlJuego();
-				System.out.println("Hola");
-				juego.inicializarPartida();
-				
-				
-				//Establecer la puntuaciÛn de nuevo a cero
-				actualizarPuntuacion();
+
+				// Refresco de la pantalla
+				refrescarPantalla();
 			}
 		});
+
+		// Redimensionado de la imagen
+		/*
+		 * panelImagen.addComponentListener(new ComponentAdapter() {
+		 * 
+		 * @Override public void componentResized(ComponentEvent e) { ImageIcon icon =
+		 * new ImageIcon(bufferedImage.getScaledInstance(labelImagen.getWidth(),
+		 * labelImagen.getHeight(), Image.SCALE_SMOOTH)); labelImagen.setIcon(icon); }
+		 * });
+		 */
 
 	}
 
@@ -266,6 +297,26 @@ public class VentanaPrincipal {
 	}
 
 	/**
+	 * Insertar la imagen del juego
+	 */
+	public void insertarImagen() {
+
+		bufferedImage = null;
+
+		try {
+			bufferedImage = ImageIO.read(new File("image/bombday.png"));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		ImageIcon icon = new ImageIcon(
+				bufferedImage.getScaledInstance(panelImagen.getWidth(), panelImagen.getHeight(), Image.SCALE_SMOOTH));
+		labelImagen.setIcon(icon);
+		labelImagen.setHorizontalAlignment(SwingConstants.CENTER);
+
+	}
+
+	/**
 	 * M√©todo para inicializar el programa
 	 */
 	public void inicializar() {
@@ -274,6 +325,7 @@ public class VentanaPrincipal {
 		ventana.setVisible(true);
 		inicializarComponentes();
 		inicializarListeners();
+		insertarImagen();
 	}
 
 }

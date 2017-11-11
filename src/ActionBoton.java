@@ -1,8 +1,6 @@
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-import javax.swing.JFrame;
-
 /**
  * Clase que implementa el listener de los botones del Buscaminas. De alguna
  * manera tendrÃ¡ que poder acceder a la ventana principal. Se puede lograr
@@ -37,6 +35,7 @@ public class ActionBoton implements ActionListener {
 			ventana.actualizarPuntuacion();
 			ventana.refrescarPantalla();
 			
+			//Comprobación de si se han descubierto todas las minas
 			if (ventana.getJuego().esFinJuego()) {
 				ventana.mostrarFinJuego(false);
 			}
